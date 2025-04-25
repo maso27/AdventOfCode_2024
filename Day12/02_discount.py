@@ -1,25 +1,22 @@
-filename = './Day12/sample1.txt'
-verbose = 5
+filename = './Day12/input.txt'
+verbose = 0
 
-def build_adjacent_spots(coords):
-    adj_list = []
-    adj_list.append([coords[0]-1, coords[1]])
-    adj_list.append([coords[0]+1, coords[1]])
-    adj_list.append([coords[0],   coords[1]-1])
-    adj_list.append([coords[0],   coords[1]+1])
-    return adj_list
+def build_adjacent(coords):
+    x, y = coords
+    return [[x-1, y], [x+1, y], [x, y-1], [x, y+1]]
 
 def check_adjacent(coords):
     global counted_spots, garden_map
     plot = []
-    adjacents = build_adjacent_spots(coords)
     this_spot = garden_map[coords[1]][coords[0]]
+
+    adjacents = build_adjacent(coords)
     for adjacent in adjacents:
-        if adjacent not in counted_spots:
+        if tuple(adjacent) not in counted_spots:
             next_spot = garden_map[adjacent[1]][adjacent[0]]
             if next_spot == this_spot:
                 plot.append(adjacent)
-                counted_spots.append(adjacent)
+                counted_spots.add(tuple(adjacent))
                 plot += check_adjacent(adjacent)
     return plot
 
@@ -28,62 +25,39 @@ def check_adjacent(coords):
 
     
 def find_fences(plot_in):
-    fence_spots = []
+    fences = 0
     for spot in plot_in:
-        adjacents = build_adjacent_spots(spot)
+        adjacents = build_adjacent(spot)
         for adjacent in adjacents:
             if adjacent not in plot_in:
                 if verbose >= 5:
                     print(f'Fence added at {adjacent} for {spot}')
-                fence_spots.append(adjacent)
-    
-    fence_sort = sorted(fence_spots)
-    if verbose >= 4:
-        print(f'Sorted Fence: {fence_sort}')
-    vert_lengths = []
-    misc = []
-    while len(fence_sort) > 0:
-        temp_loc = fence_sort.pop(0)
-        if temp_loc[0] == fence_sort[0][0] and temp_loc[1] == fence_sort[0][1] - 1:
-            if verbose >= 5:
-                print(f'Vertical fence at {temp_loc} and {fence_sort[0]}')
-            vert_lengths.append(temp_loc)
-        else:
-            misc.append(temp_loc)
-        
-    return len(fence_sort)
+                fences += 1
+    return fences
 
-f = open(filename, 'r')
-new_lines = f.readlines() # reading all lines
-# line = f.readline()  # reading one line
-f.close()
 
-garden_map = []
-for line in new_lines: # clean \n's
-    this_line = line.rstrip()
-    garden_map.append('.' + this_line + '.')
-    
-# put . around edge
-border = '.' * len(garden_map[0])
+# Read file more efficiently
+with open(filename, 'r') as f:
+    garden_map = ['.'+line.rstrip()+'.' for line in f]
+
+# Get dimensions once
+width = len(garden_map[0])
+border = '.' * width
 garden_map.insert(0, border)
 garden_map.append(border)
+height = len(garden_map)
 
-
-
-counted_spots = []
-for x in range(len(garden_map[0])):
-    counted_spots.append([x,0])                # top border
-    counted_spots.append([x,len(garden_map)])    # bottom border
-for y in range(1,len(garden_map[0])-1): # , start=1):
-    counted_spots.append([0,y])                # left border
-    counted_spots.append([len(garden_map[0]),y]) # right border
+# Use set for O(1) lookup
+counted_spots = set()
+counted_spots.update((x, 0) for x in range(width))
+counted_spots.update((x, height-1) for x in range(width))
+counted_spots.update((0, y) for y in range(height))
+counted_spots.update((width-1, y) for y in range(height))
 
 plots_list = []
-# for y, row in enumerate(garden_map[1:-1], start=1): # everything but borders
-#     for x, spot in enumerate(row[1:-1], start=1): # everything but borders
 for y in range(1,len(garden_map)-1):
     for x in range(1,len(garden_map[0])-1):
-        if [x,y] not in counted_spots:
+        if (x,y) not in counted_spots:
             this_plot = check_adjacent([x,y])
             if len(this_plot) == 0: # no adjacents
                 this_plot = [[x,y]]

@@ -1,8 +1,6 @@
 filename = './Day12/input.txt'
 verbose = 0
 
-# TODO: fix for sample3 'C' value at 4,4
-# TODO: fix find_plots to remove diagonals
 
 def build_adjacent(coords):
     adj_list = []
