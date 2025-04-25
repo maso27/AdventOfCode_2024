@@ -1,0 +1,2 @@
+testingmul(2,1)don't()mul(31,64)don't()mul(145,001)do()mul(3,1)&
+boyomul(2,2)do()mul(5,1)don't()mul(25,25)do()
