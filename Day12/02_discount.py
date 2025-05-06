@@ -27,19 +27,23 @@ def find_fences(plot_in):
     spots_w = []    # ''  western  ''
 
     for spot in plot_in:
-        if [spot[0],spot[1]-1] not in plot_in:
-            spots_e.append([spot[0],spot[1]-1])
-        if [spot[0],spot[1]+1] not in plot_in:
-            spots_w.append([spot[0],spot[1]+1])
-        if [spot[0]-1,spot[1]] not in plot_in:
-            spots_n.append([spot[0]-1,spot[1]])
-        if [spot[0]+1,spot[1]] not in plot_in:
-            spots_s.append([spot[0]+1,spot[1]])
+        x, y = spot
+        if [x,y-1] not in plot_in:
+            spots_e.append([x,y-1])
+        if [x,y+1] not in plot_in:
+            spots_w.append([x,y+1])
+        if [x-1,y] not in plot_in:
+            spots_n.append([x-1,y])
+        if [x+1,y] not in plot_in:
+            spots_s.append([x+1,y])
 
+    # sort vertical fences
     spots_n.sort(key=lambda x: x[1]) # sort by y first
     spots_n.sort()                   # sort by x second
     spots_s.sort(key=lambda x: x[1]) # sort by y first
     spots_s.sort()                   # sort by x second
+
+    # sort horizontal fences
     spots_e.sort()                   # sort by x first
     spots_e.sort(key=lambda x: x[1]) # sort by y second
     spots_w.sort()                   # sort by x first
@@ -51,16 +55,20 @@ def find_fences(plot_in):
 
     num_fences = 0
     for spot in spots_e:
-        if [spot[0]+1,spot[1]] not in spots_e:
+        x, y = spot
+        if [x+1,y] not in spots_e:
             num_fences += 1
     for spot in spots_w:
-        if [spot[0]+1,spot[1]] not in spots_w:
+        x, y = spot
+        if [x+1,y] not in spots_w:
             num_fences += 1
     for spot in spots_n:
-        if [spot[0],spot[1]+1] not in spots_n:
+        x, y = spot
+        if [x,y+1] not in spots_n:
             num_fences += 1
     for spot in spots_s:
-        if [spot[0],spot[1]+1] not in spots_s:
+        x, y = spot
+        if [x,y+1] not in spots_s:
             num_fences += 1
 
     return num_fences
