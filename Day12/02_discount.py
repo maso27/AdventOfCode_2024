@@ -20,20 +20,50 @@ def check_adjacent(coords):
                 plot += check_adjacent(adjacent)
     return plot
 
-# def take_sides(plot_in): # calculate the number of fence sides
-    # plot_flipped = [i[::-1] for i in plot_in]  # swap y and x in list
-
-    
 def find_fences(plot_in):
-    fences = 0
+    spots_n = []    # all northern fences
+    spots_s = []    # ''  southern ''
+    spots_e = []    # ''  eastern  ''
+    spots_w = []    # ''  western  ''
+
     for spot in plot_in:
-        adjacents = build_adjacent(spot)
-        for adjacent in adjacents:
-            if adjacent not in plot_in:
-                if verbose >= 5:
-                    print(f'Fence added at {adjacent} for {spot}')
-                fences += 1
-    return fences
+        if [spot[0],spot[1]-1] not in plot_in:
+            spots_e.append([spot[0],spot[1]-1])
+        if [spot[0],spot[1]+1] not in plot_in:
+            spots_w.append([spot[0],spot[1]+1])
+        if [spot[0]-1,spot[1]] not in plot_in:
+            spots_n.append([spot[0]-1,spot[1]])
+        if [spot[0]+1,spot[1]] not in plot_in:
+            spots_s.append([spot[0]+1,spot[1]])
+
+    spots_n.sort(key=lambda x: x[1]) # sort by y first
+    spots_n.sort()                   # sort by x second
+    spots_s.sort(key=lambda x: x[1]) # sort by y first
+    spots_s.sort()                   # sort by x second
+    spots_e.sort()                   # sort by x first
+    spots_e.sort(key=lambda x: x[1]) # sort by y second
+    spots_w.sort()                   # sort by x first
+    spots_w.sort(key=lambda x: x[1]) # sort by y second
+
+    if verbose >= 4:
+        print(f'Horizontal Fence: {spots_e+spots_w}')
+        print(f'Vertical Fence:   {spots_n+spots_s}')
+
+    num_fences = 0
+    for spot in spots_e:
+        if [spot[0]+1,spot[1]] not in spots_e:
+            num_fences += 1
+    for spot in spots_w:
+        if [spot[0]+1,spot[1]] not in spots_w:
+            num_fences += 1
+    for spot in spots_n:
+        if [spot[0],spot[1]+1] not in spots_n:
+            num_fences += 1
+    for spot in spots_s:
+        if [spot[0],spot[1]+1] not in spots_s:
+            num_fences += 1
+
+    return num_fences
 
 
 # Read file more efficiently
