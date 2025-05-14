@@ -1,6 +1,8 @@
 filename = './Day13/sample.txt'
 verbose = 5
 
+import math
+
 A_COST = 3
 B_COST = 1
 
@@ -12,14 +14,42 @@ def add_machine(machine_num):
     machines_dict[machine_num]['Prize'] = dict()
 
 def find_x_combos(a_val, b_val, total_val):
+    common_d = math.gcd(a_val, b_val)
+
+    if total_val % common_d != 0: # it is impossible
+        return []
+    
     combos = []
+
+    # find first solution
     a_num = 0
     while (a_val * a_num) <= total_val:
         remaining_val = total_val - (a_val * a_num)
         if remaining_val % b_val == 0:
             b_num = int(remaining_val / b_val)
-            combos.append([a_num, b_num])
+            first_combo = [a_num, b_num]
+            # combos.append([a_num, b_num])
+            return [first_combo]
+            break
         a_num += 1
+
+    if verbose >= 4:
+        print(f'First combo: {first_combo}')
+    # TODO: find all solutions based on the first one
+# https://math.stackexchange.com/questions/20717/how-to-find-solutions-of-linear-diophantine-ax-by-c
+
+    iterator = int(b_val/common_d)
+    a = 0
+    while (a_val * a_num) <= total_val:
+        a_num = first_combo[0] + a*iterator
+        remaining_val = total_val - (a_val * a_num)
+        if remaining_val % b_val == 0:
+            b_num = int(remaining_val / b_val)
+            combos.append([a_num, b_num])
+            if verbose >= 5:
+                print(f'Adding new combo: {[a_num, b_num]}')
+        a += 1
+
     return combos
 
 def check_y_combos(a_val, b_val, total_val, combos_in):
@@ -61,8 +91,8 @@ for line in new_lines:
         machines_dict[machine_num][this_button]['X'] = int(this_line[2][2:-1])
         machines_dict[machine_num][this_button]['Y'] = int(this_line[3][2:])
     elif this_line[0] == 'Prize:':
-        machines_dict[machine_num]['Prize']['X'] = int(this_line[1][2:-1]) + 10000000000000
-        machines_dict[machine_num]['Prize']['Y'] = int(this_line[2][2:])   + 10000000000000
+        machines_dict[machine_num]['Prize']['X'] = int(this_line[1][2:-1]) # + 10000000000000
+        machines_dict[machine_num]['Prize']['Y'] = int(this_line[2][2:])   # + 10000000000000
 
 if verbose >= 5:
     for machine in machines_dict:
@@ -83,4 +113,3 @@ if verbose >= 3:
     print(f'Costs of each machine: {costs}')
 
 print(f'Final cost to win all prizes: {sum(costs)} coins.')
-# TODO: sort out minimum cost of A+B button presses

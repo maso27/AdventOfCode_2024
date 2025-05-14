@@ -1,15 +1,19 @@
-filename = './Day13/input.txt'
-verbose = 0
+filename = './Day13/sample.txt'
+verbose = 1
+
+if verbose >= 1:
+    import time
+    time_start = time.time()
 
 A_COST = 3
 B_COST = 1
 
 def add_machine(machine_num):
     global machines_dict
-    machines_dict[machine_num] = dict()
-    machines_dict[machine_num]['A'] = dict()
-    machines_dict[machine_num]['B'] = dict()
-    machines_dict[machine_num]['Prize'] = dict()
+    machines_dict[machine_num] = {}
+    machines_dict[machine_num]['A'] = {}
+    machines_dict[machine_num]['B'] = {}
+    machines_dict[machine_num]['Prize'] = {}
 
 def find_x_combos(a_val, b_val, total_val):
     combos = []
@@ -47,7 +51,7 @@ new_lines = f.readlines() # reading all lines
 # line = f.readline()  # reading one line
 f.close()
 
-machines_dict = dict()
+machines_dict = {}
 machine_num = 0
 add_machine(machine_num)
 
@@ -65,15 +69,14 @@ for line in new_lines:
         machines_dict[machine_num]['Prize']['Y'] = int(this_line[2][2:])
 
 if verbose >= 5:
-    for machine in machines_dict:
-        print(machines_dict[machine])
+    for _,machine in machines_dict.items():
+        print(machine)
 
 costs = []
 
-for machine in machines_dict:
-    this_machine = machines_dict[machine]
-    combos_x =        find_x_combos(this_machine['A']['X'], this_machine['B']['X'], this_machine['Prize']['X'])
-    combos_matched = check_y_combos(this_machine['A']['Y'], this_machine['B']['Y'], this_machine['Prize']['Y'], combos_x)
+for _, machine in machines_dict.items():
+    combos_x =        find_x_combos(machine['A']['X'], machine['B']['X'], machine['Prize']['X'])
+    combos_matched = check_y_combos(machine['A']['Y'], machine['B']['Y'], machine['Prize']['Y'], combos_x)
     if verbose >= 3:
         print(f'Possible X combos: {combos_x}')
         print(f'Matching Y combos: {combos_matched}')
@@ -83,4 +86,7 @@ if verbose >= 3:
     print(f'Costs of each machine: {costs}')
 
 print(f'Final cost to win all prizes: {sum(costs)} coins.')
-# TODO: sort out minimum cost of A+B button presses
+
+if verbose >= 1:
+    time_stop = time.time()
+    print(f'\nTime passed: {time_stop-time_start}')
