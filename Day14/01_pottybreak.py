@@ -5,7 +5,6 @@ NUM_SECONDS = 100
 ROOM_WIDTH =  101 # 11
 ROOM_HEIGHT = 103 # 7
 
-# import math
 if verbose >= 1:
     import time
     time_start = time.time()
