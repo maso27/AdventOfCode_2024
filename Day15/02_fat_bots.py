@@ -1,5 +1,5 @@
-filename = './Day15/sample.txt'
-verbose = 3
+filename = './Day15/sample2.txt'
+verbose = 5
 
 # import numpy as np
 if verbose >= 1:
@@ -12,6 +12,20 @@ def plot_map(map_list):
             print(ch,end='')
         print('')
 
+def widen_map(map_list):
+    map_out = []
+    for row in map_list:
+        fat_row = ''
+        for ch in row:
+            if ch == '@':
+                fat_row += '@.'
+            elif ch == 'O':
+                fat_row += '[]'
+            else:
+                fat_row += (ch + ch)
+        map_out.append(list(fat_row))
+    return map_out
+            
 def find_bot(map_in):
     for y, row in enumerate(map_in):
         for x, ch in enumerate(row):
@@ -24,7 +38,7 @@ def find_boxes(map_in):
     coords = []
     for y, row in enumerate(map_in):
         for x, ch in enumerate(row):
-            if ch == 'O':
+            if ch == '[': # gps location is taken at left side of box
                 coords.append([x,y])
     return coords
 
@@ -61,6 +75,7 @@ def push_boxes(map_a, directions):
             bot = next_loc
             continue
 
+        # TODO: adjust step 3 for double-wide boxes
         # step 3: box in the way
         next_box = next_loc
         while map_a[next_box[1]][next_box[0]] == 'O': # skip past boxes in a line
@@ -94,6 +109,8 @@ map_a = []
 while line != '\n':
     line = new_lines.pop(0)
     map_a.append(list(line.rstrip()))
+
+map_a = widen_map(map_a)
 
 # collect directions
 directions = ''
