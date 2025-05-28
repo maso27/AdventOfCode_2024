@@ -1,5 +1,5 @@
-filename = './Day15/sample.txt'
-verbose = 3
+filename = './Day15/input.txt'
+verbose = 1
 
 # import numpy as np
 if verbose >= 1:
