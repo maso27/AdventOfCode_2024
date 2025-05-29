@@ -1,4 +1,4 @@
-filename = './Day15/sample2.txt'
+filename = './Day15/sample3.txt'
 verbose = 5
 
 # import numpy as np
@@ -42,6 +42,14 @@ def find_boxes(map_in):
                 coords.append([x,y])
     return coords
 
+def fill_box(map_in, coords):
+    if map_in[coords[1]][coords[0]] == '[':
+        return [coords,[coords[0]+1,coords[1]]]
+    elif map_in[coords[1]][coords[0]] == ']':
+        return [[coords[0]-1,coords[1]],coords]
+    else:
+        return []
+    
 def push_boxes(map_a, directions):
     bot = find_bot(map_a)
 
@@ -75,16 +83,54 @@ def push_boxes(map_a, directions):
             bot = next_loc
             continue
 
-        # TODO: adjust step 3 for double-wide boxes
         # step 3: box in the way
         next_box = next_loc
-        while map_a[next_box[1]][next_box[0]] == 'O': # skip past boxes in a line
-            next_box = [next_box[0] + dir_go[0], next_box[1] + dir_go[1]]
+          # part 1: horizontal move
+        if rection == '<' or rection == '>':
+            while map_a[next_box[1]][next_box[0]] == '[' or map_a[next_box[1]][next_box[0]] == ']': # skip past boxes in a line
+                next_box = [next_box[0] + dir_go[0], next_box[1] + dir_go[1]]
 
-        if map_a[next_box[1]][next_box[0]] == '#': # wall blocks boxes from moving
-            continue
+            if map_a[next_box[1]][next_box[0]] == '#': # wall blocks boxes from moving
+                continue
 
-        map_a[next_box[1]][next_box[0]] = 'O'
+            x = next_loc[0]
+            if rection == '>':
+                while x <= next_box[0]:
+                    if map_a[next_loc[1]][x] == ']':
+                        map_a[next_loc[1]][x] = '['
+                    else:
+                        map_a[next_loc[1]][x] = ']'
+                    x += dir_go[0]
+            # TODO: fix the < case
+            # else:
+            #     while x >= next_box[0]:
+            #         if map_a[next_loc[1]][x] == '[':
+            #             map_a[next_loc[1]][x] = ']'
+            #         else:
+            #             map_a[next_loc[1]][x] = '[]'
+            #         x += dir_go[0]                
+
+          # part 2: vertical move
+        else:
+            no_wall = True
+            check_boxes = fill_box(map_a, next_box)
+            while no_wall and check_boxes:
+                check_boxes_temp = []
+                for spot in check_boxes:
+                    if map_a[spot[1]][spot[0]] == '#':
+                        no_wall = False
+                        continue
+                    if map_a[spot[1]][spot[0]] != '.':
+                        new_spot = [spot[0] + dir_go[0], spot[1] + dir_go[1]]
+                        check_boxes_temp += fill_box(map_a, new_spot)
+                check_boxes = []
+                [check_boxes.append(x) for x in check_boxes_temp if x not in check_boxes] # removing unique values
+            if not no_wall:
+                continue
+            # TODO: figure out vertical box pushes
+          
+
+        # handle bot and box move
         map_a[next_loc[1]][next_loc[0]] = '@'
         map_a[bot[1]][bot[0]] = '.'
         bot = next_loc
