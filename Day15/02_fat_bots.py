@@ -1,5 +1,5 @@
 filename = './Day15/sample3.txt'
-verbose = 5
+verbose = 4
 
 # import numpy as np
 if verbose >= 1:
@@ -34,7 +34,7 @@ def find_bot(map_in):
     print('No bot found')
     exit()
 
-def find_boxes(map_in):
+def mark_boxes(map_in):
     coords = []
     for y, row in enumerate(map_in):
         for x, ch in enumerate(row):
@@ -48,8 +48,26 @@ def fill_box(map_in, coords):
     elif map_in[coords[1]][coords[0]] == ']':
         return [[coords[0]-1,coords[1]],coords]
     else:
-        return []
+        return [] # not a box
     
+def push_map(map_a, box_coords, y):
+    pushed_coords = []
+
+    # place boxes in new locations
+    # while box_coords:
+    #     coord = box_coords.pop()
+    for coord in reversed(box_coords): # gotta move the final ones first
+        new_spot = [coord[0], coord[1] + y]
+        pushed_coords.append(new_spot)
+        map_a[new_spot[1]][new_spot[0]] = map_a[coord[1]][coord[0]] # move box to new spot
+
+    # empty spaces in old locations
+    for coord in box_coords:
+        if coord not in pushed_coords:
+            map_a[coord[1]][coord[0]] = '.'
+
+    return map_a
+
 def push_boxes(map_a, directions):
     bot = find_bot(map_a)
 
@@ -59,18 +77,18 @@ def push_boxes(map_a, directions):
             print(f'Next direction: {rection}')
 
         if rection == '<':
-            dir_go = [-1,0]
+            x_go, y_go = -1,0
         elif rection == '^':
-            dir_go = [0,-1]
+            x_go, y_go = 0,-1
         elif rection == '>':
-            dir_go = [1,0]
+            x_go, y_go = 1,0
         elif rection == 'v':
-            dir_go = [0,1]
+            x_go, y_go = 0,1
         else:
             print('Where are you going?')
             exit()
 
-        next_loc = [bot[0] + dir_go[0], bot[1] + dir_go[1]]
+        next_loc = [bot[0] + x_go, bot[1] + y_go]
 
         # step 1: look for wall
         if map_a[next_loc[1]][next_loc[0]] == '#':
@@ -85,14 +103,16 @@ def push_boxes(map_a, directions):
 
         # step 3: box in the way
         next_box = next_loc
+
           # part 1: horizontal move
         if rection == '<' or rection == '>':
             while map_a[next_box[1]][next_box[0]] == '[' or map_a[next_box[1]][next_box[0]] == ']': # skip past boxes in a line
-                next_box = [next_box[0] + dir_go[0], next_box[1] + dir_go[1]]
+                next_box = [next_box[0] + 2*x_go, next_box[1] + 2*y_go]
 
             if map_a[next_box[1]][next_box[0]] == '#': # wall blocks boxes from moving
                 continue
 
+            # update box locations on map
             x = next_loc[0]
             if rection == '>':
                 while x <= next_box[0]:
@@ -100,34 +120,36 @@ def push_boxes(map_a, directions):
                         map_a[next_loc[1]][x] = '['
                     else:
                         map_a[next_loc[1]][x] = ']'
-                    x += dir_go[0]
-            # TODO: fix the < case
-            # else:
-            #     while x >= next_box[0]:
-            #         if map_a[next_loc[1]][x] == '[':
-            #             map_a[next_loc[1]][x] = ']'
-            #         else:
-            #             map_a[next_loc[1]][x] = '[]'
-            #         x += dir_go[0]                
+                    x += x_go
+            else:
+                while x >= next_box[0]:
+                    if map_a[next_loc[1]][x] == '[':
+                        map_a[next_loc[1]][x] = ']'
+                    else:
+                        map_a[next_loc[1]][x] = '['
+                    x += x_go
 
           # part 2: vertical move
         else:
             no_wall = True
             check_boxes = fill_box(map_a, next_box)
+            pushed_boxes = check_boxes.copy() # a list of all the boxes that need pushed
             while no_wall and check_boxes:
                 check_boxes_temp = []
                 for spot in check_boxes:
-                    if map_a[spot[1]][spot[0]] == '#':
+                    new_spot = [spot[0] + x_go, spot[1] + y_go]
+                    if map_a[new_spot[1]][new_spot[0]] == '#':
                         no_wall = False
                         continue
-                    if map_a[spot[1]][spot[0]] != '.':
-                        new_spot = [spot[0] + dir_go[0], spot[1] + dir_go[1]]
+                    if map_a[new_spot[1]][new_spot[0]] != '.':
                         check_boxes_temp += fill_box(map_a, new_spot)
                 check_boxes = []
-                [check_boxes.append(x) for x in check_boxes_temp if x not in check_boxes] # removing unique values
-            if not no_wall:
+                [check_boxes.append(x) for x in check_boxes_temp if x not in check_boxes] # dropping duplicate coordinates
+                pushed_boxes += check_boxes # used for actual box push
+            if not no_wall: # hit a frickin' wall
                 continue
-            # TODO: figure out vertical box pushes
+            
+            map_a = push_map(map_a, pushed_boxes, y_go)
           
 
         # handle bot and box move
@@ -138,7 +160,7 @@ def push_boxes(map_a, directions):
 
 def sum_up(map_a):
     total = 0
-    coords = find_boxes(map_a)
+    coords = mark_boxes(map_a)
     for coord in coords:
         total += coord[0] + (coord[1] * 100)
     return total
