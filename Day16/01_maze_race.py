@@ -68,6 +68,9 @@ class Path:
     def step_back(self, maze):
         while self.check_fwd_left_right(maze) < 0:
             self.history.pop() # clean up last tried location
+            # if self.finished:
+            #     self.history.pop() # not blocking old locations, but blocking this one
+            #     self.history.append(self.location) # preventing us from just using the same old path
             last_step     = self.path.pop() # remove last location
             self.location = last_step[0]
             self.dir      = last_step[1]
@@ -76,6 +79,7 @@ class Path:
             last_points = self.points.pop()
             while last_points == 1000 and self.points:
                 last_points = self.points.pop()
+        # self.finished = False # for when we're looking for another path
         self.path.insert(-1, last_step) # final "check_fwd_left_right" already added a value
 
 
@@ -89,35 +93,60 @@ maze = np.array(new_lines)
 start_arr = np.where(maze=='S')
 start_point = [start_arr[0][0], start_arr[1][0]]
 
+# set up to go all cardinal directions
+cardinals = {'east': {}, 'west': {}, 'north': {}, 'south': {}}
+cardinals['east']['dir']  = np.array([0, 1], dtype=int)
+cardinals['west']['dir']  = np.array([0,-1], dtype=int)
+cardinals['north']['dir'] = np.array([-1,0], dtype=int)
+cardinals['south']['dir'] = np.array([ 1,0], dtype=int)
+cardinals['east']['points']  = [0]
+cardinals['west']['points']  = [1000, 1000]
+cardinals['north']['points'] = [1000]
+cardinals['south']['points'] = [1000]
+
 
 full_paths = [] # paths that reach the end
 
 if verbose >= 4:
     show_map(maze)
-    print(f'Starting point found at {start_point}')
+    print(f'Starting point found at {start_point}\n')
 
-success = -1
-path = Path(start_point)
-while path.finished is False:
-    success = path.follow_path(maze)
-    if success < 0:
-        path.step_back(maze)
+for _,direction in cardinals.items():
 
-if verbose >= 3:
-    if success == 1:
-        print('Reached the end!')
-    else:
-        print(f'Failed at point{path.location}')
+    maze_path        = Path(start_point)
+    maze_path.dir    = direction['dir']
+    maze_path.points = direction['points']
+    
+    success = -1
+    
+    while maze_path.finished is False:
+        success = maze_path.follow_path(maze)
+        if success < 0:
+            maze_path.step_back(maze)
+    full_paths.append(maze_path)
 
-if verbose >= 5:
-    maze_temp = maze.copy()
-    for loc in path.history:
-        maze_temp[loc] = ' '
-        maze_temp[tuple(path.location)] = 'R'
-    show_map(maze_temp)
-full_paths.append(path)
+    # maze_path.step_back(maze)
+    # maze_path.finished = False # reset to try again
+    # while maze_path.finished is False:
+    #     success = maze_path.follow_path(maze)
+    #     if success < 0:
+    #         maze_path.step_back(maze)
+
+    if verbose >= 3:
+        if success == 1:
+            print('Reached the end!')
+        else:
+            print(f'Failed at point{maze_path.location}')
+
+    if verbose >= 5:
+        maze_temp = maze.copy()
+        for loc in maze_path.history:
+            maze_temp[loc] = ' '
+            maze_temp[tuple(maze_path.location)] = 'R'
+        show_map(maze_temp)
+
 # TODO: continue to find a shorter path
-# TODO: make a backstep that expunges history too;j
+# TODO: make a backstep that expunges history too
 
 if verbose >= 1:
     time_stop = time.time()
