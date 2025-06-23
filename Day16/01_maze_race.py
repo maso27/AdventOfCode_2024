@@ -13,64 +13,71 @@ def show_map(map_in):
         print()
 
 class Path:
-    def __init__(self, start_point = [0,0]):
-        self.location = np.array(start_point, dtype=int)
+    def __init__(self, maze = np.array([['S','E']])):
+        self.maze        = maze
+        
+        start_arr        = np.where(self.maze == 'S')
+        self.start_point = [start_arr[0][0], start_arr[1][0]]
+        end_arr          = np.where(self.maze == 'E')
+        self.end_point   = [end_arr[0][0], end_arr[1][0]]
+
+        self.location = np.array(self.start_point, dtype=int)
         self.dir      = np.array([0,1], dtype=int)  # start facing east
         self.path     = [[self.location.copy(),self.dir.copy()]] # latest path explored
         self.history  = [] # every location visited including backsteps
         self.points   = []
         self.finished = False
 
-    def step(self, maze):
+    def step(self):
         status = 0
         new_location = tuple(self.location + self.dir)
-        if maze[new_location] == '#' or new_location in self.history:
+        if self.maze[new_location] == '#' or new_location in self.history:
             return -1
-        elif maze[new_location] == 'E':
+        elif new_location == tuple(self.end_point):
             self.finished = True
-            status = 1
+            return 1
         self.location = np.array(new_location)
         return status
     
-    def check_fwd_left_right(self, maze):
+    def check_fwd_left_right(self):
         self.history.append(tuple(self.location))
         # check forward
-        status = self.step(maze)
+        status = self.step()
         # check left
         if status < 0: # can't go there
             self.points.append(1000)
             self.dir[0], self.dir[1] = -self.dir[1], self.dir[0] # turn left
-            status = self.step(maze)
+            status = self.step()
         # check right
         if status < 0: # can't go there
             self.dir = -self.dir # turn around to check right
-            status = self.step(maze)
+            status = self.step()
         # if something worked
         if status == 0:
             self.points.append(1)
             self.path.append([self.location.copy(),self.dir.copy()])
         return status
 
-    def follow_path(self, maze):
+    def follow_path(self):
         status = 0
         while status == 0:
-            status = self.check_fwd_left_right(maze)
+            status = self.check_fwd_left_right()
         if verbose >= 4:
             print('reached an end point')   
-            maze_temp = maze.copy()
+            maze_temp = self.maze.copy()
             for loc in self.history:
                 maze_temp[loc] = ' '
-                maze_temp[tuple(self.location)] = 'R'
+            maze_temp[tuple(self.location)] = 'R'
             show_map(maze_temp)
             input('Press Enter to continue...')
         return status
 
-    def step_back(self, maze):
-        while self.check_fwd_left_right(maze) < 0:
+    def step_back(self):
+        while self.check_fwd_left_right() < 0:
             self.history.pop() # clean up last tried location
-            # if self.finished:
-            #     self.history.pop() # not blocking old locations, but blocking this one
-            #     self.history.append(self.location) # preventing us from just using the same old path
+            if self.finished:
+                self.history.pop() # not blocking old locations, but blocking this one
+                self.history.append(self.location) # preventing us from just using the same old path
             last_step     = self.path.pop() # remove last location
             self.location = last_step[0]
             self.dir      = last_step[1]
@@ -79,7 +86,7 @@ class Path:
             last_points = self.points.pop()
             while last_points == 1000 and self.points:
                 last_points = self.points.pop()
-        # self.finished = False # for when we're looking for another path
+        self.finished = False # for when we're looking for another path
         self.path.insert(-1, last_step) # final "check_fwd_left_right" already added a value
 
 
@@ -90,10 +97,8 @@ with open(filename, 'r') as file:
 file.close()
 
 maze = np.array(new_lines)
-start_arr = np.where(maze=='S')
-start_point = [start_arr[0][0], start_arr[1][0]]
 
-# set up to go all cardinal directions
+# set up to start in any cardinal direction
 cardinals = {'east': {}, 'west': {}, 'north': {}, 'south': {}}
 cardinals['east']['dir']  = np.array([0, 1], dtype=int)
 cardinals['west']['dir']  = np.array([0,-1], dtype=int)
@@ -107,30 +112,26 @@ cardinals['south']['points'] = [1000]
 
 full_paths = [] # paths that reach the end
 
-if verbose >= 4:
-    show_map(maze)
-    print(f'Starting point found at {start_point}\n')
-
 for _,direction in cardinals.items():
 
-    maze_path        = Path(start_point)
+    maze_path        = Path(maze)
     maze_path.dir    = direction['dir']
     maze_path.points = direction['points']
     
     success = -1
     
     while maze_path.finished is False:
-        success = maze_path.follow_path(maze)
+        success = maze_path.follow_path()
         if success < 0:
-            maze_path.step_back(maze)
+            maze_path.step_back()
     full_paths.append(maze_path)
 
-    # maze_path.step_back(maze)
+    # maze_path.step_back()
     # maze_path.finished = False # reset to try again
     # while maze_path.finished is False:
-    #     success = maze_path.follow_path(maze)
+    #     success = maze_path.follow_path()
     #     if success < 0:
-    #         maze_path.step_back(maze)
+    #         maze_path.step_back()
 
     if verbose >= 3:
         if success == 1:
@@ -139,7 +140,7 @@ for _,direction in cardinals.items():
             print(f'Failed at point{maze_path.location}')
 
     if verbose >= 5:
-        maze_temp = maze.copy()
+        maze_temp = maze_path.maze.copy()
         for loc in maze_path.history:
             maze_temp[loc] = ' '
             maze_temp[tuple(maze_path.location)] = 'R'
